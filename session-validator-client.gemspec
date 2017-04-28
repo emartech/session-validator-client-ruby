@@ -6,4 +6,11 @@ Gem::Specification.new do |s|
   s.email       = "security@emarsys.com"
   s.homepage    = "https://www.emarsys.com/"
   s.licenses    = ["MIT"]
+
+  s.required_ruby_version = '>= 1.9'
+
+  s.add_runtime_dependency "escher"
+
+  s.add_development_dependency "rspec"
+  s.add_development_dependency "webmock"
 end
