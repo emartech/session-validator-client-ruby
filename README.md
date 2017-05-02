@@ -1,4 +1,4 @@
-# session-validator-client-ruby
+# session-validator-client-ruby ![Build status](https://travis-ci.org/emartech/session-validator-client-ruby.svg?branch=master)
 
 Ruby client for Emarsys session validator service.
 
