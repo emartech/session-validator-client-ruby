@@ -7,6 +7,6 @@ script: "bundle exec rspec"
 deploy:
   provider: rubygems
   api_key: ${RUBYGEMS_API_KEY}
+  gemspec: session-validator-client.gemspec
   on:
     tags: true
-
