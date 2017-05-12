@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "session-validator-client"
-  s.version     = "1.0.1"
+  s.version     = "1.0.2"
   s.summary     = "Ruby client for Emarsys session validator service"
   s.authors     = ["Emarsys Technologies Ltd."]
   s.email       = "security@emarsys.com"
