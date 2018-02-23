@@ -46,6 +46,12 @@ RSpec.describe SessionValidator::Client do
       it { is_expected.to eq false }
     end
 
+    context "client is not configured properly" do
+      before { http_request.to_return status: [401, "Unauthorized"] }
+
+      it { is_expected.to eq false }
+    end
+
     context "service is not working properly" do
       before { http_request.to_return status: [500, "Internal Server Error"] }
 

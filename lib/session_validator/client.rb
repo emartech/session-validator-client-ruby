@@ -31,7 +31,7 @@ module SessionValidator
 
       log Logger::DEBUG, "response code: #{response.code}, response body: #{response.body}"
 
-      !response.is_a? Net::HTTPNotFound
+      response.is_a? Net::HTTPSuccess or response.is_a? Net::HTTPServerError
     rescue Net::OpenTimeout
       log Logger::DEBUG, "open timeout"
       true
