@@ -31,7 +31,7 @@ module SessionValidator
 
       log Logger::DEBUG, "response code: #{response.code}, response body: #{response.body}"
 
-      response.is_a? Net::HTTPSuccess or response.is_a? Net::HTTPServerError
+      response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPServerError)
     rescue Net::OpenTimeout
       log Logger::DEBUG, "open timeout"
       true
@@ -43,12 +43,7 @@ module SessionValidator
     private
 
     def signed_request(method, path)
-      request_data(method, path).tap do |request_data|
-        @escher.sign! request_data, {
-          api_key_id: @api_key,
-          api_secret: @api_secret
-        }
-      end
+      @escher.sign! request_data(method, path), { api_key_id: @api_key, api_secret: @api_secret }
     end
 
     def request_data(method, path)

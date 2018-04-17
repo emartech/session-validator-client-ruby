@@ -6,33 +6,44 @@ RSpec.describe SessionValidator::Client do
   let(:api_secret) { "dummy_api_secret" }
 
   let(:credential_scope) { "eu/session-validator/ems_request" }
-  let(:escher_config) {{
-    algo_prefix: "EMS",
-    vendor_key: "EMS",
-    auth_header_name: "X-Ems-Auth",
-    date_header_name: "X-Ems-Date"
-  }}
-
-  let(:escher) { instance_double(Escher::Auth) }
-
-  before { allow(Escher::Auth).to receive(:new).with(credential_scope, escher_config).and_return(escher) }
+  let(:escher_config) do
+    {
+      algo_prefix: "EMS",
+      vendor_key: "EMS",
+      auth_header_name: "X-Ems-Auth",
+      date_header_name: "X-Ems-Date"
+    }
+  end
 
   describe "#valid?" do
-    subject(:result) { client.valid? msid }
+    subject(:validation) { client.valid? msid }
 
     let(:msid) { "test_12345.67890" }
-    let(:request_to_sign) {{
-      method: "GET",
-      uri: "/sessions/#{msid}",
-      headers: [
-        ["content-type", "application/json"],
-        ["host", service_url]
-      ]
-    }}
-
+    let(:request_to_sign) do
+      {
+        method: "GET",
+        uri: "/sessions/#{msid}",
+        headers: [
+          ["content-type", "application/json"],
+          ["host", service_url]
+        ]
+      }
+    end
     let(:http_request) { stub_request(:get, "https://#{service_url}/sessions/#{msid}") }
 
-    before { allow(escher).to receive(:sign!).with(request_to_sign, { api_key_id: api_key, api_secret: api_secret }) }
+    context "when performing validation" do
+      let(:escher) { instance_double(Escher::Auth) }
+
+      before { http_request.to_return status: [200, "OK"] }
+
+      it "signs the request" do
+        expect(Escher::Auth).to receive(:new).with(credential_scope, escher_config).and_return(escher)
+        expect(escher).to receive(:sign!).with(request_to_sign, { api_key_id: api_key, api_secret: api_secret })
+                           .and_return(request_to_sign)
+
+        validation
+      end
+    end
 
     context "msid is valid" do
       before { http_request.to_return status: [200, "OK"] }
