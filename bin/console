@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require 'bundler/setup'
+require 'session_validator'
+require 'dotenv'
+
+Dotenv.load
+
+require 'irb'
+IRB.start
