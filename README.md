@@ -2,6 +2,12 @@
 
 Ruby client for Emarsys session validator service.
 
+## Install
+
+```bash
+gem install session-validator-client
+```
+
 ## Usage
 
 ```ruby
@@ -24,4 +30,10 @@ cached_client = SessionValidator::CachedClient.new client, cache
 if cached_client.valid? "dummy_msid"
   puts "MSID is valid!"
 end
+```
+
+## Running tests
+
+```bash
+rspec
 ```
