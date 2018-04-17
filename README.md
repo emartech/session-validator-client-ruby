@@ -10,26 +10,17 @@ gem install session-validator-client
 
 ## Usage
 
+setup up the following environment variables:
+
+* `KEY_POOL`
+* `SESSION_VALIDATOR_KEYID`
+* `SESSION_VALIDATOR_URL`
+
 ```ruby
-require "logger"
 require "session_validator"
 
-options = {
-  service_url: "dummy-service.example.org",
-  api_key: "dummy_api_key",
-  api_secret: "dummy_api_secret",
-}
-
-client = SessionValidator::Client.new options
-client.logger = Logger.new STDOUT
-
-cache = SessionValidator::InMemoryCache.new 300
-
-cached_client = SessionValidator::CachedClient.new client, cache
-
-if cached_client.valid? "dummy_msid"
-  puts "MSID is valid!"
-end
+client = SessionValidator::Client.new
+client.valid?("staging_int_5ad5f96f307cf9.61063404")
 ```
 
 ## Running tests

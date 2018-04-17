@@ -1,79 +1,59 @@
-require "escher"
-require "logger"
-require "net/http"
+require "uri"
+require "escher-keypool"
+require "faraday"
+require "faraday_middleware"
+require "faraday_middleware/escher"
 
-module SessionValidator
-  class Client
-    attr_accessor :logger
+class SessionValidator::Client
+  CREDENTIAL_SCOPE = "eu/session-validator/ems_request".freeze
+  ESCHER_AUTH_OPTIONS = {
+    algo_prefix: "EMS",
+    vendor_key: "EMS",
+    auth_header_name: "X-Ems-Auth",
+    date_header_name: "X-Ems-Date"
+  }.freeze
+  SERVICE_REQUEST_TIMEOUT = 2.freeze
 
-    CREDENTIAL_SCOPE = "eu/session-validator/ems_request".freeze
+  def valid?(msid)
+    response_status = client.get("/sessions/#{msid}", nil, headers).status
+    (200..299).include?(response_status) || (500..599).include?(response_status)
+  rescue Faraday::TimeoutError
+    true
+  end
 
-    ESCHER_CONFIG = {
-      algo_prefix: "EMS",
-      vendor_key: "EMS",
-      auth_header_name: "X-Ems-Auth",
-      date_header_name: "X-Ems-Date"
-    }.freeze
+  private
 
-    SERVICE_REQUEST_TIMEOUT = 0.15.freeze
-
-    def initialize(service_url:, api_key:, api_secret:)
-      @escher = Escher::Auth.new(CREDENTIAL_SCOPE, ESCHER_CONFIG)
-      @logger = nil
-
-      @service_url = service_url
-      @api_key = api_key
-      @api_secret = api_secret
+  def client
+    Faraday.new(url) do |faraday|
+      faraday.options[:open_timeout] = SERVICE_REQUEST_TIMEOUT
+      faraday.options[:timeout] = SERVICE_REQUEST_TIMEOUT
+      faraday.use FaradayMiddleware::Escher::RequestSigner, escher_config
+      faraday.adapter Faraday.default_adapter
     end
+  end
 
-    def valid?(msid)
-      response = execute signed_request "GET", "/sessions/#{msid}"
+  def url
+    uri.to_s
+  end
 
-      log Logger::DEBUG, "response code: #{response.code}, response body: #{response.body}"
+  def host
+    uri.hostname
+  end
 
-      response.is_a?(Net::HTTPSuccess) || response.is_a?(Net::HTTPServerError)
-    rescue Net::OpenTimeout
-      log Logger::DEBUG, "open timeout"
-      true
-    rescue Net::ReadTimeout
-      log Logger::DEBUG, "read timeout"
-      true
-    end
+  def uri
+    URI.parse(SessionValidator.base_url)
+  end
 
-    private
+  def escher_config
+    {
+      credential_scope: CREDENTIAL_SCOPE,
+      host: host,
+      options: ESCHER_AUTH_OPTIONS,
+      active_key: -> { ::Escher::Keypool.new.get_active_key("session_validator") }
+    }
+  end
 
-    def signed_request(method, path)
-      @escher.sign! request_data(method, path), { api_key_id: @api_key, api_secret: @api_secret }
-    end
-
-    def request_data(method, path)
-      {
-        method: method,
-        uri: path,
-        headers: [
-          ["content-type", "application/json"],
-          ["host", @service_url]
-        ]
-      }
-    end
-
-    def execute(data)
-      request = Net::HTTP::Get.new(data[:uri])
-
-      data[:headers].each { |header| request[header.first] = header.last }
-
-      options = {
-        use_ssl: true,
-        open_timeout: SERVICE_REQUEST_TIMEOUT,
-        read_timeout: SERVICE_REQUEST_TIMEOUT
-      }
-
-      Net::HTTP.start(@service_url, 443, options) { |http| http.request(request) }
-    end
-
-    def log(severity, message)
-      return unless @logger
-      @logger.log(severity, message)
-    end
+  def headers
+    { "content-type" => "application/json" }
   end
 end
