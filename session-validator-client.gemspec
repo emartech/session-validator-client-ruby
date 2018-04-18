@@ -1,13 +1,18 @@
 Gem::Specification.new do |s|
   s.name        = "session-validator-client"
-  s.version     = "3.0.0"
+  s.version     = "3.0.1"
   s.summary     = "Ruby client for Emarsys session validator service"
   s.authors     = ["Emarsys Technologies Ltd."]
   s.email       = "security@emarsys.com"
-  s.homepage    = "https://github.com/emartech/session-validator-client-ruby/"
+  s.homepage    = "https://github.com/emartech/session-validator-client-ruby"
   s.licenses    = ["MIT"]
 
   s.required_ruby_version = ">= 1.9"
+
+  s.files = `git ls-files -z`.split("\x0").reject do |f|
+    f.match(%r{^(test|spec|features)/})
+  end
+  s.require_paths = ['lib']
 
   s.add_dependency "escher-keypool"
   s.add_dependency "faraday"
