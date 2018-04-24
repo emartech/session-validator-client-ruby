@@ -15,5 +15,16 @@ module SessionValidator
         @cache.set msid, result if result
       end
     end
+
+    def filter_invalid(msids)
+      @cache.cleanup
+
+      @client.filter_invalid(msids).tap do |result|
+        msids.each do |msid|
+          @cache.set msid, true unless result.include?(msid)
+        end
+      end
+    end
+
   end
 end

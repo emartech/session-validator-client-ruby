@@ -21,6 +21,18 @@ class SessionValidator::Client
     true
   end
 
+  def filter_invalid(msids)
+    response = client.post("/sessions/filter", JSON.generate({msids:msids}), headers)
+    if response.status == 200
+      JSON.parse(response.body)
+    else
+      []
+    end
+  rescue Faraday::TimeoutError
+    []
+  end
+
+
   private
 
   def client

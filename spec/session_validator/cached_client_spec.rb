@@ -47,4 +47,50 @@ RSpec.describe SessionValidator::CachedClient do
       it { is_expected.to be true }
     end
   end
+
+  describe "#filter_invalid" do
+    subject(:result) { cached_client.filter_invalid msids }
+
+    let(:msids) { ["test_12345.67890", "test_12345.67891", "test_12345.67892"] }
+
+    before do
+      allow(cache).to receive(:cleanup)
+    end
+
+    context "when called" do
+      before do
+        allow(cache).to receive(:set)
+        allow(client).to receive(:filter_invalid).with(msids).and_return([])
+      end
+      it do
+        expect(cache).to receive(:cleanup).with(no_args)
+        result
+      end
+    end
+
+    context "when msids are valid" do
+      before do
+        allow(cache).to receive(:set)
+        allow(client).to receive(:filter_invalid).with(msids).and_return([])
+      end
+
+      it do
+        msids.each do |msid|
+          expect(cache).to receive(:set).with(msid, true)
+        end
+        result
+      end
+      it { is_expected.to eq [] }
+    end
+
+    context "when msids are invalid" do
+      before do
+        allow(client).to receive(:filter_invalid).with(msids).and_return(msids)
+      end
+
+      it { is_expected.to eq msids }
+    end
+
+  end
+
 end
