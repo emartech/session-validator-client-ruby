@@ -39,10 +39,18 @@ RSpec.describe SessionValidator::Client do
       it { is_expected.to eq true }
     end
 
-    context "when request timeouted" do
-      before { http_request.to_raise Faraday::TimeoutError }
+    context "when request times out" do
+      before { http_request.to_timeout }
 
       it { is_expected.to eq true }
+    end
+
+    context "when request times out at first but eventually succeeds" do
+      before { http_request.to_timeout.then.to_timeout.then.to_return status: [404, 'Not Found'] }
+
+      it 'retries the request and returns the result of the query' do
+        expect(validation).to eq false
+      end
     end
   end
 
@@ -61,10 +69,18 @@ RSpec.describe SessionValidator::Client do
                                       .and_return(escher_keypool)
     end
 
-    context "when request timeouted" do
-      before { http_request.to_raise Faraday::TimeoutError }
+    context "when request times out" do
+      before { http_request.to_timeout }
 
       it { is_expected.to eq [] }
+    end
+
+    context "when request times out at first but eventually succeeds" do
+      before { http_request.to_timeout.then.to_timeout.then.to_return body: JSON.generate(invalid_msids) }
+
+      it 'retries the request and returns the list of invalid msids' do
+        expect(validation).to eq invalid_msids
+      end
     end
 
     context "when given a list of msids" do
@@ -85,7 +101,5 @@ RSpec.describe SessionValidator::Client do
 
       it { is_expected.to eq invalid_msids }
     end
-
   end
-
 end
