@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
 
   s.add_dependency "escher-keypool"
-  s.add_dependency "faraday"
+  s.add_dependency "faraday", '~> 1.0'
   s.add_dependency "faraday_middleware"
   s.add_dependency "faraday_middleware-escher"
 

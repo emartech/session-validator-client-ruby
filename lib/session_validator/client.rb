@@ -13,7 +13,7 @@ class SessionValidator::Client
     date_header_name: "X-Ems-Date"
   }.freeze
   SERVICE_REQUEST_TIMEOUT = 2.freeze
-  NETWORK_ERRORS = Faraday::Request::Retry::DEFAULT_EXCEPTIONS + [Faraday::Error::ConnectionFailed] - ['Timeout::Error']
+  NETWORK_ERRORS = Faraday::Request::Retry::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed] - ['Timeout::Error']
 
   def valid?(msid)
     response_status = client.get("/sessions/#{msid}", nil, headers).status
