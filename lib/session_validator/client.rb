@@ -1,7 +1,7 @@
 require "uri"
 require "escher-keypool"
 require "faraday"
-require "faraday_middleware"
+require "faraday/retry"
 require "faraday_middleware/escher"
 
 class SessionValidator::Client
@@ -13,7 +13,7 @@ class SessionValidator::Client
     date_header_name: "X-Ems-Date"
   }.freeze
   SERVICE_REQUEST_TIMEOUT = 2.freeze
-  NETWORK_ERRORS = Faraday::Request::Retry::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed] - ['Timeout::Error']
+  NETWORK_ERRORS = Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed] - ['Timeout::Error']
 
   def valid?(msid)
     response_status = client.get("/sessions/#{msid}", nil, headers).status
@@ -40,7 +40,7 @@ class SessionValidator::Client
       faraday.options[:open_timeout] = SERVICE_REQUEST_TIMEOUT
       faraday.options[:timeout] = SERVICE_REQUEST_TIMEOUT
       faraday.request :retry, interval: 0.05, interval_randomness: 0.5, backoff_factor: 2, methods: [:get, :post], exceptions: NETWORK_ERRORS
-      faraday.use FaradayMiddleware::Escher::RequestSigner, escher_config
+      faraday.use Faraday::Middleware::Escher::RequestSigner, escher_config
       faraday.adapter Faraday.default_adapter
     end
   end
