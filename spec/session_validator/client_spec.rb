@@ -12,7 +12,35 @@ RSpec.describe SessionValidator::Client do
     before do
       stub_const 'ENV', ENV.to_h.merge('SESSION_VALIDATOR_URL' => service_url)
       allow(::Escher::Keypool).to receive_message_chain(:new, :get_active_key).with("session_validator")
-                                    .and_return(escher_keypool)
+                                                                              .and_return(escher_keypool)
+    end
+
+    context "when use_escher is true (default)" do
+      it "uses escher middleware to sign the request" do
+        http_request.to_return status: [200, "OK"]
+
+        validation
+
+        assert_requested(:get, "#{service_url}/sessions/#{msid}") do |req|
+          headers = req.headers.keys.map(&:downcase)
+          expect(headers).to include('x-ems-auth', 'x-ems-date')
+        end
+      end
+    end
+
+    context "when use_escher is false" do
+      subject(:validation) { SessionValidator::Client.new(use_escher: false).valid? msid }
+
+      it "uses escher middleware to sign the request" do
+        http_request.to_return status: [200, "OK"]
+
+        validation
+
+        assert_requested(:get, "#{service_url}/sessions/#{msid}") do |req|
+          headers = req.headers.keys.map(&:downcase)
+          expect(headers).not_to include('x-ems-auth', 'x-ems-date')
+        end
+      end
     end
 
     context "when msid is valid" do
@@ -66,7 +94,7 @@ RSpec.describe SessionValidator::Client do
     before do
       stub_const 'ENV', ENV.to_h.merge('SESSION_VALIDATOR_URL' => service_url)
       allow(::Escher::Keypool).to receive_message_chain(:new, :get_active_key).with("session_validator")
-                                      .and_return(escher_keypool)
+                                                                              .and_return(escher_keypool)
     end
 
     context "when request times out" do
@@ -87,7 +115,7 @@ RSpec.describe SessionValidator::Client do
       before { http_request.to_return body: JSON.generate(invalid_msids) }
 
       it { is_expected.to have_requested(:post, "#{service_url}/sessions/filter").
-          with(body: JSON.generate({msids: msids})) }
+        with(body: JSON.generate({ msids: msids })) }
     end
 
     context "when response status code is not 200 OK" do

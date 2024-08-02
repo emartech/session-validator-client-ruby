@@ -15,6 +15,10 @@ class SessionValidator::Client
   SERVICE_REQUEST_TIMEOUT = 2.freeze
   NETWORK_ERRORS = Faraday::Retry::Middleware::DEFAULT_EXCEPTIONS + [Faraday::ConnectionFailed] - ['Timeout::Error']
 
+  def initialize(use_escher: true)
+    @use_escher = use_escher
+  end
+
   def valid?(msid)
     response_status = client.get("/sessions/#{msid}", nil, headers).status
     (200..299).include?(response_status) || (500..599).include?(response_status)
@@ -23,7 +27,7 @@ class SessionValidator::Client
   end
 
   def filter_invalid(msids)
-    response = client.post("/sessions/filter", JSON.generate({msids: msids}), headers)
+    response = client.post("/sessions/filter", JSON.generate({ msids: msids }), headers)
     if response.status == 200
       JSON.parse(response.body)
     else
@@ -40,7 +44,7 @@ class SessionValidator::Client
       faraday.options[:open_timeout] = SERVICE_REQUEST_TIMEOUT
       faraday.options[:timeout] = SERVICE_REQUEST_TIMEOUT
       faraday.request :retry, interval: 0.05, interval_randomness: 0.5, backoff_factor: 2, methods: [:get, :post], exceptions: NETWORK_ERRORS
-      faraday.use Faraday::Middleware::Escher::RequestSigner, escher_config
+      faraday.use(Faraday::Middleware::Escher::RequestSigner, escher_config) if @use_escher
       faraday.adapter Faraday.default_adapter
     end
   end
@@ -67,6 +71,6 @@ class SessionValidator::Client
   end
 
   def headers
-    {"content-type" => "application/json"}
+    { "content-type" => "application/json" }
   end
 end
