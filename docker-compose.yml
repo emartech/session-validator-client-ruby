@@ -1,6 +1,5 @@
 services:
   app:
-    image: ruby:3.2.5
-    working_dir: /home/app/src
+    build: .
     volumes:
-      - .:/home/app/src
+      - .:/app
